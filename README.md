@@ -148,11 +148,9 @@ make down
 * **Container restart loops**: check logs
 
   ```bash
+  docker-compose -f srcs/docker-compose.yml logs --tail=20 <service>
   ```
 
-docker-compose -f srcs/docker-compose.yml logs --tail=20 <service>
-
-```
 - **Permissions issues**: ensure host directories and secrets have correct owners:
   - `/home/$LOGIN/data/wp_db_data` owned by UID/GID 999 (mysql)
   - `/home/$LOGIN/data/wp_data` owned by `www-data`
@@ -167,7 +165,5 @@ docker-compose -f srcs/docker-compose.yml logs --tail=20 <service>
 
 ---
 
-*Status: This README is aligned 100% with the Inception Mandatory subject.*
-
-```
+Status: This README is aligned 100% with the Inception Mandatory subject.
 
