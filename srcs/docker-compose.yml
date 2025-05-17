@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: ./requirements/nginx
+    ports:
+      - "443:443"
+    volumes:
+      - ../secrets/nginx:/etc/nginx/certs:ro
+      - ../secrets:/run/secrets:ro
+      - /home/${LOGIN}/data/wp_data:/var/www/html:ro
+    networks:
+      - inception-net
+    restart: always
+
+  mariadb:
+    build: ./requirements/mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_password.txt
+      - MYSQL_DATABASE=${WP_DB_NAME}
+      - MYSQL_USER=${WP_DB_USER}
+      - MYSQL_PASSWORD_FILE=/run/secrets/db_password.txt
+    volumes:
+      - /home/${LOGIN}/data/wp_db_data:/var/lib/mysql
+    networks:
+      - inception-net
+    restart: always
+
+  wordpress:
+    build: ./requirements/wordpress
+    environment:
+      - WORDPRESS_DB_HOST=mariadb
+      - WORDPRESS_DB_NAME=${WP_DB_NAME}
+      - WORDPRESS_DB_USER=${WP_DB_USER}
+      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password.txt
+    volumes:
+      - /home/${LOGIN}/data/wp_data:/var/www/html
+    networks:
+      - inception-net
+    restart: always
+
+secrets:
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  db_password:
+    file: ../secrets/db_password.txt
+
+networks:
+  inception-net:
+    driver: bridge
+
