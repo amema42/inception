@@ -7,8 +7,12 @@ RUN apt-get update && \
 # socket
 RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld
 
+# copy custom entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 3306
 
-# mysql in foreground
-CMD ["mysqld","--console"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["mysqld", "--console"]
 
