@@ -182,6 +182,8 @@ make clean
 - All container images are built from Debian 12 base.
 - Nginx is the sole HTTPS entrypoint, serving via FastCGI to PHP-FPM.
 - Docker secrets are used for database credentials and TLS certificates.
+- `docker-compose` passes `DOMAIN=${LOGIN}.42.fr` to the nginx container so the
+  `server_name` is configured dynamically.
 
 ---
 
