@@ -3,6 +3,8 @@ version: '3.8'
 services:
   nginx:
     build: ./requirements/nginx
+    environment:
+      - DOMAIN=${LOGIN}.42.fr
     ports:
       - "443:443"
     volumes:
