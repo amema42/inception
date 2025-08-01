@@ -11,6 +11,7 @@ This project sets up a fully containerized WordPress environment using Docker an
    * [1. Clone the repository](#1-clone-the-repository)
    * [2. Create persistence directories](#2-create-persistence-directories)
    * [3. Generate secrets](#3-generate-secrets)
+   * [4. Configure environment](#4-configure-environment)
 4. [Usage](#usage)
 
    * [Start the stack](#start-the-stack)
@@ -100,6 +101,19 @@ openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
   -subj "/C=IT/ST=State/L=City/O=42School/OU=Inception/CN=$LOGIN.42.fr"
 chmod 600 secrets/nginx/{server.key,server.crt}
 ```
+
+### 4. Configure environment
+
+Edit `srcs/.env` and set your login name. The file contains default values:
+
+```env
+LOGIN=<your_login>
+WP_DB_NAME=wordpress
+WP_DB_USER=wp_user
+```
+
+Set `LOGIN` to your 42 login (e.g. `amema`). The other variables usually stay as
+shown.
 
 ---
 
