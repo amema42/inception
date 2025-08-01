@@ -108,10 +108,10 @@ chmod 600 secrets/nginx/{server.key,server.crt}
 ### Start the stack
 
 ```bash
-make up
+make        # or: make up
 ```
 
-This command builds and starts all containers in detached mode.
+Builds and starts all containers in detached mode.
 
 ### Verify services
 
@@ -138,7 +138,13 @@ You should see **nginx**, **mariadb**, and **wordpress** containers in the *Up* 
 To stop and remove all containers and network:
 
 ```bash
-make down
+make down   # stop and remove containers
+```
+
+To also remove volumes and images:
+
+```bash
+make clean
 ```
 
 ---
