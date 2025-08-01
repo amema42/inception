@@ -6,9 +6,12 @@ services:
     ports:
       - "443:443"
     volumes:
-      - ../secrets/nginx:/etc/nginx/certs:ro
-      - ../secrets:/run/secrets:ro
       - /home/${LOGIN}/data/wp_data:/var/www/html:ro
+    secrets:
+      - source: server.crt
+        target: /etc/nginx/certs/server.crt
+      - source: server.key
+        target: /etc/nginx/certs/server.key
     networks:
       - inception-net
     restart: always
@@ -22,6 +25,11 @@ services:
       - MYSQL_PASSWORD_FILE=/run/secrets/db_password.txt
     volumes:
       - /home/${LOGIN}/data/wp_db_data:/var/lib/mysql
+    secrets:
+      - source: db_root_password
+        target: db_root_password.txt
+      - source: db_password
+        target: db_password.txt
     networks:
       - inception-net
     restart: always
@@ -35,6 +43,9 @@ services:
       - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password.txt
     volumes:
       - /home/${LOGIN}/data/wp_data:/var/www/html
+    secrets:
+      - source: db_password
+        target: db_password.txt
     networks:
       - inception-net
     restart: always
@@ -44,6 +55,10 @@ secrets:
     file: ../secrets/db_root_password.txt
   db_password:
     file: ../secrets/db_password.txt
+  server.crt:
+    file: ../secrets/nginx/server.crt
+  server.key:
+    file: ../secrets/nginx/server.key
 
 networks:
   inception-net:
