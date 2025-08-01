@@ -1,4 +1,4 @@
-.PHONY: all up down
+.PHONY: all up down clean
 
 all: up
 
@@ -7,4 +7,7 @@ up:
 
 down:
 	docker-compose -f srcs/docker-compose.yml down
+
+clean:
+	docker-compose -f srcs/docker-compose.yml down -v --rmi all
 
