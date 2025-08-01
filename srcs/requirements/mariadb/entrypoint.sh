@@ -1,40 +1,24 @@
-#!/bin/bash
-set -e
+#!/bin/sh
 
-DB_DIR=/var/lib/mysql
+DB_NAME="$WP_DB_NAME"
+DB_USER="$WP_DB_USER"
+DB_PASS="$WP_DB_PASSWORD"
+DB_ROOT_PASS="$WP_DB_ROOT_PASSWORD"
 
-if [ ! -d "$DB_DIR/mysql" ]; then
-    echo "Initializing MariaDB data directory"
-    mariadb-install-db --user=mysql --datadir="$DB_DIR" > /dev/null
+# init mysql if not initialized
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+  echo "[+] Inizializzazione..."
+  mysql_install_db --user=mysql --ldata=/var/lib/mysql
 
-    mysqld --skip-networking &
-    pid="$!"
-
-    mysql=( mysql --protocol=socket -uroot )
-    for i in {30..0}; do
-        if "${mysql[@]}" -e "SELECT 1" >/dev/null 2>&1; then
-            break
-        fi
-        sleep 1
-    done
-    if [ "$i" = 0 ]; then
-        echo >&2 'MariaDB init process failed.'
-        exit 1
-    fi
-
-    root_pass="$(cat "$MYSQL_ROOT_PASSWORD_FILE")"
-    user_pass="$(cat "$MYSQL_PASSWORD_FILE")"
-
-    "${mysql[@]}" <<-EOSQL
-        ALTER USER 'root'@'localhost' IDENTIFIED BY '${root_pass}';
-        CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-        CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${user_pass}';
-        GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
-        FLUSH PRIVILEGES;
-EOSQL
-
-    mysqladmin shutdown -uroot --password="${root_pass}"
-    wait "$pid"
+  echo "[+] Creazione DB e utente..."
+  mysqld --user=mysql --bootstrap << EOF
+FLUSH PRIVILEGES;
+CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;
+CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
+FLUSH PRIVILEGES;
+EOF
 fi
 
-exec "$@"
+exec mysqld_safe
+

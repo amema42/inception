@@ -1,68 +1,40 @@
-version: '3.8'
-
 services:
-  nginx:
-    build: ./requirements/nginx
-    environment:
-      - DOMAIN=${LOGIN}.42.fr
-    ports:
-      - "443:443"
-    volumes:
-      - /home/${LOGIN}/data/wp_data:/var/www/html:ro
-    secrets:
-      - source: server.crt
-        target: /etc/nginx/certs/server.crt
-      - source: server.key
-        target: /etc/nginx/certs/server.key
-    networks:
-      - inception-net
-    restart: always
-
   mariadb:
+    container_name: mariadb
     build: ./requirements/mariadb
-    environment:
-      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db_root_password.txt
-      - MYSQL_DATABASE=${WP_DB_NAME}
-      - MYSQL_USER=${WP_DB_USER}
-      - MYSQL_PASSWORD_FILE=/run/secrets/db_password.txt
+    env_file: .env
     volumes:
-      - /home/${LOGIN}/data/wp_db_data:/var/lib/mysql
-    secrets:
-      - source: db_root_password
-        target: db_root_password.txt
-      - source: db_password
-        target: db_password.txt
+      - /home/amema/data/mariadb:/var/lib/mysql
     networks:
-      - inception-net
+      - inception
     restart: always
 
   wordpress:
+    container_name: wordpress
     build: ./requirements/wordpress
-    environment:
-      - WORDPRESS_DB_HOST=mariadb
-      - WORDPRESS_DB_NAME=${WP_DB_NAME}
-      - WORDPRESS_DB_USER=${WP_DB_USER}
-      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password.txt
+    env_file: .env
     volumes:
-      - /home/${LOGIN}/data/wp_data:/var/www/html
-    secrets:
-      - source: db_password
-        target: db_password.txt
+      - /home/amema/data/wordpress:/var/www/html
+    depends_on:
+      - mariadb
     networks:
-      - inception-net
+      - inception
     restart: always
 
-secrets:
-  db_root_password:
-    file: ../secrets/db_root_password.txt
-  db_password:
-    file: ../secrets/db_password.txt
-  server.crt:
-    file: ../secrets/nginx/server.crt
-  server.key:
-    file: ../secrets/nginx/server.key
+  nginx:
+    container_name: nginx
+    build: ./requirements/nginx
+    volumes:
+      - /home/amema/data/wordpress:/var/www/html
+    ports:
+      - "443:443"
+    networks:
+      - inception
+    depends_on:
+      - wordpress
+    restart: always
 
 networks:
-  inception-net:
+  inception:
     driver: bridge
 
