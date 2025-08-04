@@ -1,9 +1,22 @@
 #!/bin/sh
 
+# Load passwords from Docker secrets
+if [ -f /run/secrets/db_password ]; then
+    DB_PASS=$(cat /run/secrets/db_password)
+else
+    echo "Error: db_password secret not found"
+    exit 1
+fi
+
+if [ -f /run/secrets/db_root_password ]; then
+    DB_ROOT_PASS=$(cat /run/secrets/db_root_password)
+else
+    echo "Error: db_root_password secret not found"
+    exit 1
+fi
+
 DB_NAME="$WP_DB_NAME"
 DB_USER="$WP_DB_USER"
-DB_PASS="$WP_DB_PASSWORD"
-DB_ROOT_PASS="$WP_DB_ROOT_PASSWORD"
 
 echo "[DEBUG] Variables loaded:"
 echo "DB_NAME: $DB_NAME"

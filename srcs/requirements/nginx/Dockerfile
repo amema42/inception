@@ -1,18 +1,15 @@
 FROM debian:12
 
 RUN apt-get update \
- && apt-get install -y nginx openssl \
+ && apt-get install -y nginx \
  && rm -rf /var/lib/apt/lists/*
 
-# Copia la configurazione principale
+# Copy main configuration
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 
-# Crea cartelle e copia i certificati SSL
-RUN mkdir -p /etc/nginx/certs /var/log/nginx
-COPY server.crt /etc/nginx/certs/server.crt
-COPY server.key /etc/nginx/certs/server.key
+# Create directory for mounted certificates
+RUN mkdir -p /etc/nginx/certs
 
 EXPOSE 443
-
 CMD ["nginx", "-g", "daemon off;"]
 

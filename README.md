@@ -1,191 +1,114 @@
-# Inception - Dockerized WordPress Stack
+# Inception
 
-This project sets up a fully containerized WordPress environment using Docker and Docker Compose, following the Inception subject guidelines from the 42 school.
+A containerized WordPress stack implementing a three-tier architecture with NGINX reverse proxy, WordPress with PHP-FPM, and MariaDB database.
 
-## Table of Contents
+## Getting Started
 
-1. [Prerequisites](#prerequisites)
-2. [Repository Structure](#repository-structure)
-3. [Initial Setup](#initial-setup)
+### Prerequisites
 
-   * [1. Clone the repository](#1-clone-the-repository)
-   * [2. Create persistence directories](#2-create-persistence-directories)
-   * [3. Generate secrets](#3-generate-secrets)
-   * [4. Configure environment](#4-configure-environment)
-4. [Usage](#usage)
+- Docker Engine (>= 20.10)
+- Docker Compose (>= 1.29)
+- OpenSSL
+- Linux environment with sudo privileges
 
-   * [Start the stack](#start-the-stack)
-   * [Verify services](#verify-services)
-   * [Browser setup](#browser-setup)
-5. [Stopping & Cleanup](#stopping--cleanup)
-6. [Troubleshooting](#troubleshooting)
-7. [Additional Notes](#additional-notes)
+### Installation
 
----
-
-## Prerequisites
-
-* Docker (>= 20.10)
-* Docker Compose (>= 1.29)
-* `openssl` for generating certificates and passwords
-* A Linux host or VM (Debian/Ubuntu recommended)
-
----
-
-## Repository Structure
-
-```
-inception/
-├── Makefile
-├── README.md            # This guide
-├── secrets/             # Secret placeholders and TLS samples
-│   ├── db_root_password.txt.sample
-│   ├── db_password.txt.sample
-│   └── nginx.sample/
-│       ├── server.crt.sample
-│       └── server.key.sample
-└── srcs/
-    ├── docker-compose.yml
-    ├── requirements/
-    │   ├── mariadb/Dockerfile
-    │   ├── wordpress/Dockerfile
-    │   └── nginx/
-    │       ├── Dockerfile
-    │       └── conf/nginx.conf
-    └── data/             # (Optional) custom nginx configs
-```
-
----
-
-## Initial Setup
-
-### 1. Clone the repository
-
+1. Clone the repository:
 ```bash
-git clone <your-repo-url>
+git clone <repository-url>
 cd inception
 ```
 
-### 2. Create persistence directories
-
-These directories live **outside** the repository, in your home directory:
-
+2. Run the automated setup:
 ```bash
-export LOGIN=$(whoami)
-# On a new machine, set LOGIN=amema or your 42 login
-mkdir -p /home/$LOGIN/data/wp_db_data /home/$LOGIN/data/wp_data
+make all
 ```
 
-> The database files will live in `wp_db_data`, and WordPress uploads in `wp_data`.
-
-### 3. Generate secrets
-
-Copy the sample placeholders and generate your own secrets locally:
-
+3. Configure domain resolution:
 ```bash
-# Copy placeholder files
-cp secrets/db_root_password.txt.sample secrets/db_root_password.txt
-cp secrets/db_password.txt.sample    secrets/db_password.txt
-mkdir -p secrets/nginx
-cp -r secrets/nginx.sample/* secrets/nginx/
-
-# Generate strong passwords
-openssl rand -base64 16 > secrets/db_root_password.txt
-openssl rand -base64 16 > secrets/db_password.txt
-chmod 600 secrets/db_*.txt
-
-# Generate self-signed TLS cert & key
-openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
-  -keyout secrets/nginx/server.key \
-  -out secrets/nginx/server.crt \
-  -subj "/C=IT/ST=State/L=City/O=42School/OU=Inception/CN=$LOGIN.42.fr"
-chmod 600 secrets/nginx/{server.key,server.crt}
+# Add to /etc/hosts (done automatically if confirmed during setup)
+echo "127.0.0.1 amema.42.fr" | sudo tee -a /etc/hosts
 ```
 
-### 4. Configure environment
-
-Edit `srcs/.env` and set your login name. The file contains default values:
-
-```env
-LOGIN=<your_login>
-WP_DB_NAME=wordpress
-WP_DB_USER=wp_user
-```
-
-Set `LOGIN` to your 42 login (e.g. `amema`). The other variables usually stay as
-shown.
-
----
-
-## Usage
-
-### Start the stack
-
+4. Access the WordPress site:
 ```bash
-make        # or: make up
+https://amema.42.fr
 ```
 
-Builds and starts all containers in detached mode.
+### Usage
 
-### Verify services
-
+Start services:
 ```bash
-docker-compose -f srcs/docker-compose.yml ps
+make up
 ```
 
-You should see **nginx**, **mariadb**, and **wordpress** containers in the *Up* state.
-
-### Browser setup
-
-1. Add an entry to `/etc/hosts` on your host machine:
-
-   ```
-   127.0.0.1   $LOGIN.42.fr
-   ```
-2. Open `https://$LOGIN.42.fr` in your browser.
-3. Complete the WordPress installation wizard (DB name, user, password from `secrets/`).
-
----
-
-## Stopping & Cleanup
-
-To stop and remove all containers and network:
-
+Stop services:
 ```bash
-make down   # stop and remove containers
+make down
 ```
 
-To also remove volumes and images:
-
+Clean environment:
 ```bash
-make clean
+make clean      # Remove containers and generated files
+make fclean     # Complete cleanup including data volumes
 ```
 
----
+## Project Structure
 
-## Troubleshooting
+```
+inception/
+├── Makefile                    # Build automation and lifecycle management
+├── docker-compose.yml          # Service orchestration configuration
+├── scripts/
+│   └── setup.sh               # Environment initialization script
+├── secrets/                   # Generated certificates and passwords (git-ignored)
+│   ├── server.crt            # SSL certificate
+│   ├── server.key            # SSL private key
+│   ├── db_password.txt       # WordPress database user password
+│   └── db_root_password.txt  # MariaDB root password
+└── srcs/
+    ├── .env                   # Environment variables (git-ignored)
+    ├── .env.example          # Environment template
+    └── requirements/
+        ├── mariadb/          # MariaDB container configuration
+        │   ├── Dockerfile
+        │   ├── entrypoint.sh
+        │   └── my.cnf
+        ├── nginx/            # NGINX reverse proxy configuration
+        │   ├── Dockerfile
+        │   └── conf/
+        │       └── nginx.conf
+        └── wordpress/        # WordPress with PHP-FPM configuration
+            ├── Dockerfile
+            └── entrypoint.sh
+```
 
-* **Container restart loops**: check logs
+## Main Components
 
-  ```bash
-  docker-compose -f srcs/docker-compose.yml logs --tail=20 <service>
-  ```
+### NGINX (Reverse Proxy)
+- Handles HTTPS termination with TLS 1.2/1.3
+- Serves static files and proxies PHP requests to WordPress container
+- Configured with custom SSL certificates
+- Listens on port 443 only
 
-- **Permissions issues**: ensure host directories and secrets have correct owners:
-  - `/home/$LOGIN/data/wp_db_data` owned by UID/GID 999 (mysql)
-  - `/home/$LOGIN/data/wp_data` owned by `www-data`
+### WordPress (Application Layer)
+- PHP-FPM based WordPress installation
+- Automated setup with WP-CLI
+- Creates admin and author users during initialization
+- Connects to MariaDB via Docker networking
 
----
+### MariaDB (Database Layer)
+- Persistent database storage with Docker volumes
+- Automatic database and user creation
+- Configured for container networking with bind-address 0.0.0.0
+- Uses Docker secrets for password management
 
-## Additional Notes
+### Data Flow
+1. HTTPS requests arrive at NGINX on port 443
+2. Static files served directly by NGINX
+3. PHP requests forwarded to WordPress container via FastCGI
+4. WordPress communicates with MariaDB over internal Docker network
+5. Database data persisted to host filesystem via bind mounts
 
-- All container images are built from Debian 12 base.
-- Nginx is the sole HTTPS entrypoint, serving via FastCGI to PHP-FPM.
-- Docker secrets are used for database credentials and TLS certificates.
-- `docker-compose` passes `DOMAIN=${LOGIN}.42.fr` to the nginx container so the
-  `server_name` is configured dynamically.
 
----
-
-Status: This README is aligned 100% with the Inception Mandatory subject.
 

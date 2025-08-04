@@ -1,8 +1,11 @@
 services:
   mariadb:
     container_name: mariadb
-    build: ./requirements/mariadb
-    env_file: .env
+    build: ./srcs/requirements/mariadb
+    env_file: ./srcs/.env
+    secrets:
+      - db_password
+      - db_root_password
     volumes:
       - /home/amema/data/mariadb:/var/lib/mysql
     networks:
@@ -11,8 +14,10 @@ services:
 
   wordpress:
     container_name: wordpress
-    build: ./requirements/wordpress
-    env_file: .env
+    build: ./srcs/requirements/wordpress
+    env_file: ./srcs/.env
+    secrets:
+      - db_password
     volumes:
       - /home/amema/data/wordpress:/var/www/html
     depends_on:
@@ -23,9 +28,12 @@ services:
 
   nginx:
     container_name: nginx
-    build: ./requirements/nginx
+    build: ./srcs/requirements/nginx
+    env_file: ./srcs/.env
     volumes:
       - /home/amema/data/wordpress:/var/www/html
+      - ./secrets/server.crt:/etc/nginx/certs/server.crt:ro
+      - ./secrets/server.key:/etc/nginx/certs/server.key:ro
     ports:
       - "443:443"
     networks:
@@ -38,3 +46,8 @@ networks:
   inception:
     driver: bridge
 
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  db_root_password:
+    file: ./secrets/db_root_password.txt
